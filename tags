@@ -1,0 +1,39 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+BOOL	main.c	/^typedef Uint8 BOOL;$/;"	t	file:
+ClearScreen	main.c	/^void ClearScreen(u32 *screen_pixels)$/;"	f
+FALSE	main.c	/^#define FALSE /;"	d	file:
+FillRect	main.c	/^void FillRect(rect_t rect, u32 pixel_color, u32 *screen_pixels)$/;"	f
+SCREEN_HEIGHT	main.c	/^#define SCREEN_HEIGHT /;"	d	file:
+SCREEN_WIDTH	main.c	/^#define SCREEN_WIDTH /;"	d	file:
+TRUE	main.c	/^#define TRUE /;"	d	file:
+code	main.c	/^            SDL_Keycode code = event.key.keysym.sym;$/;"	l
+done	main.c	/^    BOOL done = FALSE;$/;"	l
+event	main.c	/^        SDL_Event event;$/;"	l
+format	main.c	/^    SDL_PixelFormat *format = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA8888);$/;"	l
+h	main.c	/^    int h;$/;"	m	struct:__anon1	file:
+main	main.c	/^int main(int argc, char **argv)$/;"	f
+me_h	main.c	/^    int me_h = 20;$/;"	l
+me_w	main.c	/^    int me_w = 10;$/;"	l
+me_x	main.c	/^    int me_x = SCREEN_WIDTH\/2 + me_w\/2;$/;"	l
+me_x	main.c	/^int me_x;$/;"	v
+me_y	main.c	/^    int me_y = SCREEN_HEIGHT\/2 - me_h\/2;$/;"	l
+me_y	main.c	/^int me_y;$/;"	v
+pathlib	parse-lib-tags.py	/^import pathlib$/;"	i
+pixel_color	main.c	/^                        u32 pixel_color = 0x00FF00FF; \/\/ RGBA$/;"	l
+pixel_color	main.c	/^    u32 pixel_color = 0x00000000;$/;"	l
+rect	main.c	/^                        rect_t rect = {me_x, me_y, me_w, me_h};$/;"	l
+rect	main.c	/^    rect_t rect = {0,0, SCREEN_WIDTH, SCREEN_HEIGHT};$/;"	l
+rect_t	main.c	/^} rect_t;$/;"	t	typeref:struct:__anon1	file:
+renderer	main.c	/^    SDL_Renderer *renderer = SDL_CreateRenderer($/;"	l
+screen	main.c	/^    SDL_Texture *screen = SDL_CreateTexture($/;"	l
+screen_pixels	main.c	/^    u32 *screen_pixels = (u32*) calloc(SCREEN_WIDTH * SCREEN_HEIGHT, sizeof(u32));$/;"	l
+u32	main.c	/^typedef Uint32 u32;$/;"	t	file:
+w	main.c	/^    int w;$/;"	m	struct:__anon1	file:
+win	main.c	/^    SDL_Window *win = SDL_CreateWindow($/;"	l
+x	main.c	/^    int x;$/;"	m	struct:__anon1	file:
+y	main.c	/^    int y;$/;"	m	struct:__anon1	file:
