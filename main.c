@@ -15,6 +15,9 @@
 //          :make lib-tags # updates tags for header file dependencies (a bit slower)
 //     Go to https://wiki.libsdl.org/SDL_blah for docs and examples
 
+// TODO: Troubleshoot
+// Intermittent seg fault caused when "me" wraps screen vertically.
+
 #include <assert.h>
 #include <stdio.h>
 #include <SDL.h>
