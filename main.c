@@ -23,11 +23,14 @@
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 800
 
+
 typedef Uint32 u32;
 typedef Uint8 Bool;
 
 #define True 1
 #define False 0
+
+#define internal static // static functions are "internal"
 
 typedef struct
 {
@@ -37,7 +40,7 @@ typedef struct
     int h;
 } rect_t;
 
-void FillRect(rect_t rect, u32 pixel_color, u32 *screen_pixels)
+internal void FillRect(rect_t rect, u32 pixel_color, u32 *screen_pixels)
 {
     assert(screen_pixels);
     for (int row=0; row < rect.h; row++)
@@ -51,6 +54,10 @@ void FillRect(rect_t rect, u32 pixel_color, u32 *screen_pixels)
 
 int main(int argc, char **argv)
 {
+    // ---------------
+    // | Game window |
+    // ---------------
+
     SDL_Init(SDL_INIT_VIDEO);
 
     SDL_Window *win = SDL_CreateWindow(
@@ -83,7 +90,11 @@ int main(int argc, char **argv)
 
     Bool done = False;
 
+    // ---------------------------
+    // | Game graphics that move |
+    // ---------------------------
 
+    // Me
     int me_w = SCREEN_WIDTH/50;
     int me_h = SCREEN_HEIGHT/50;
     rect_t me = {
@@ -93,6 +104,16 @@ int main(int argc, char **argv)
         me_w,
         me_h
     };
+    u32 me_color = 0x22FF00FF; // RGBA
+
+    // ----------------------------------
+    // | Game graphics that do not move |
+    // ----------------------------------
+
+    // Background
+    rect_t bgnd = {0,0, SCREEN_WIDTH, SCREEN_HEIGHT};
+
+    // Debug LED
     int debug_led_w = SCREEN_WIDTH/50;
     int debug_led_h = SCREEN_HEIGHT/50;
     rect_t debug_led = {
@@ -101,11 +122,25 @@ int main(int argc, char **argv)
         debug_led_w,                // width
         debug_led_h                 // height
     };
+
     // LED starts out green. Turns red on vertical wraparound.
     u32 debug_led_color = 0x00FF0000; // green
 
-    while (!done)
+    // -----------------
+    // | Game controls |
+    // -----------------
+    Bool pressed_down  = False;
+    Bool pressed_up    = False;
+    Bool pressed_left  = False;
+    Bool pressed_right = False;
+
+
+    while (!done) // GAME LOOP
     {
+        // ----------------------
+        // | Get keyboard input |
+        // ----------------------
+
         SDL_Event event;
         while(SDL_PollEvent(&event))
         {
@@ -113,11 +148,6 @@ int main(int argc, char **argv)
             {
                 done = True;
             }
-
-            Bool pressed_down  = False;
-            Bool pressed_up    = False;
-            Bool pressed_left  = False;
-            Bool pressed_right = False;
 
             SDL_Keycode code = event.key.keysym.sym;
 
@@ -147,56 +177,64 @@ int main(int argc, char **argv)
                 default:
                     break;
             }
-
-            if (pressed_down)
-            {
-                if ((me.y + me.h) < SCREEN_HEIGHT) // not at bottom yet
-                {
-                    me.y += me.h;
-                }
-                else // wraparound
-                {
-                    me.y = 0;
-                    debug_led_color = 0xFF000000; // red
-                }
-            }
-            if (pressed_up)
-            {
-                if (me.y > me.h) // not at top yet
-                {
-                    me.y -= me.h;
-                }
-                else // wraparound
-                {
-                    me.y = SCREEN_HEIGHT - me.h;
-                    debug_led_color = 0xFF000000; // red
-                }
-            }
-            if (pressed_left)
-            {
-                me.x -= me.w; // wraparound is automatic
-            }
-            if (pressed_right)
-            {
-                me.x += me.w; // wraparound is automatic
-            }
-
         }
 
-        // Clear the screen.
-        /* memset(screen_pixels, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u32)); */
-        rect_t bgnd = {0,0, SCREEN_WIDTH, SCREEN_HEIGHT};
-        /* u32 bgnd_color = 0xFF0000FF; */
+        // --------
+        // | DRAW |
+        // --------
+
+        // ---Clear the screen---
         u32 bgnd_color = 0x111100FF;
         FillRect(bgnd, bgnd_color, screen_pixels);
+        //
+        // Use memset for quickly making the screen black:
+        /* memset(screen_pixels, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u32)); */
 
-        // Draw me.
-        u32 pixel_color = 0x22FF00FF; // RGBA
-        /* u32 pixel_color = 0x80808000; */
-        FillRect(me, pixel_color, screen_pixels);
-
-        // Draw debug led.
+        // ---Draw debug led---
         FillRect(debug_led, debug_led_color, screen_pixels);
+
+
+        // ---Draw me---
+        //
+        // Act on keypresses OUTSIDE the SDL_PollEvent loop!
+            // If I calc me position inside the SDL_PollEvent loop, me only
+            // responds to one keystroke at a time.
+            // For example, press hj to move me diagonal down and left. If I
+            // calc me position inside the SDL_PollEvent loop, the movement is
+            // spread out over two iterations of the GAME LOOP.
+        if (pressed_down)
+        {
+            if ((me.y + me.h) < SCREEN_HEIGHT) // not at bottom yet
+            {
+                me.y += me.h;
+            }
+            else // wraparound
+            {
+                me.y = 0;
+                debug_led_color = 0xFF000000; // red
+            }
+        }
+        if (pressed_up)
+        {
+            if (me.y > me.h) // not at top yet
+            {
+                me.y -= me.h;
+            }
+            else // wraparound
+            {
+                me.y = SCREEN_HEIGHT - me.h;
+                debug_led_color = 0xFF000000; // red
+            }
+        }
+        if (pressed_left)
+        {
+            me.x -= me.w; // wraparound is automatic
+        }
+        if (pressed_right)
+        {
+            me.x += me.w; // wraparound is automatic
+        }
+        FillRect(me, me_color, screen_pixels);
 
         SDL_UpdateTexture(
                 screen,        // SDL_Texture *
