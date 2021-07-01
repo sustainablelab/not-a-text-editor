@@ -15,9 +15,6 @@
 //          :make lib-tags # updates tags for header file dependencies (a bit slower)
 //     Go to https://wiki.libsdl.org/SDL_blah for docs and examples
 
-// TODO: Troubleshoot
-// Intermittent seg fault caused when "me" wraps screen vertically.
-
 #include <assert.h>
 #include <stdio.h>
 #include <SDL.h>
@@ -34,6 +31,10 @@ typedef Uint8 Bool;
 #define False 0
 
 #define internal static // static functions are "internal"
+
+// ---------------
+// | Drawing lib |
+// ---------------
 
 typedef struct
 {
@@ -55,11 +56,83 @@ internal void FillRect(rect_t rect, u32 pixel_color, u32 *screen_pixels)
     }
 }
 
+// ---------------
+// | Logging lib |
+// ---------------
+
+FILE *f;
+internal void clear_log_file(void)
+{
+    f = fopen("log.txt", "w");
+    fclose(f);
+}
+
+internal void log_to_file(char * log_msg)
+{
+    f = fopen("log.txt", "a");
+    fprintf(f, log_msg);
+    fclose(f);
+}
+
+#define MAX_LOG_MSG 1024
+char log_msg[MAX_LOG_MSG];
+
+internal void log_renderer_info(SDL_Renderer * renderer)
+{
+    // Get renderer info for logging.
+
+    SDL_RendererInfo info;
+    SDL_GetRendererInfo(
+            renderer, // SDL_Renderer *
+            &info // SDL_RendererInfo *
+            );
+
+    // Log name.
+    log_to_file("Renderer info:\n");
+    sprintf(log_msg, "\tname: %s\n", info.name);
+    log_to_file(log_msg);
+
+    // Log which flags are supported.
+    log_to_file("\tSupported SDL_RendererFlags:\n");
+    sprintf(log_msg,
+            "\t\tSDL_RENDERER_SOFTWARE: %s\n",
+            (info.flags & SDL_RENDERER_SOFTWARE) ? "True" : "False"
+            );
+    log_to_file(log_msg);
+    sprintf(log_msg,
+            "\t\tSDL_RENDERER_ACCELERATED: %s\n",
+            (info.flags & SDL_RENDERER_ACCELERATED) ? "True" : "False"
+            );
+    log_to_file(log_msg);
+    sprintf(log_msg,
+            "\t\tSDL_RENDERER_PRESENTVSYNC: %s\n",
+            (info.flags & SDL_RENDERER_PRESENTVSYNC) ? "True" : "False"
+            );
+    log_to_file(log_msg);
+    sprintf(log_msg,
+            "\t\tSDL_RENDERER_TARGETTEXTURE: %s\n",
+            (info.flags & SDL_RENDERER_TARGETTEXTURE) ? "True" : "False"
+            );
+    log_to_file(log_msg);
+
+    // Log texture info.
+    sprintf(log_msg, "\tNumber of available texture formats: %d\n", info.num_texture_formats);
+    log_to_file(log_msg);
+    sprintf(log_msg, "\tMax texture width: %d\n", info.max_texture_width);
+    log_to_file(log_msg);
+    sprintf(log_msg, "\tMax texture height: %d\n", info.max_texture_height);
+    log_to_file(log_msg);
+}
+
 int main(int argc, char **argv)
 {
+    clear_log_file();
+
     // ---------------
     // | Game window |
     // ---------------
+    sprintf(log_msg, "Open game window: %dx%d... ", SCREEN_WIDTH, SCREEN_HEIGHT);
+    log_to_file(log_msg);
 
     SDL_Init(SDL_INIT_VIDEO);
 
@@ -69,14 +142,15 @@ int main(int argc, char **argv)
             SCREEN_WIDTH, SCREEN_HEIGHT, // int w, int h,
             SDL_WINDOW_RESIZABLE // Uint32 flags
             );
-    assert(win);
+    assert(win); log_to_file("OK\n");
 
     SDL_Renderer *renderer = SDL_CreateRenderer(
             win, // SDL_Window *
             0, // int index
             SDL_RENDERER_SOFTWARE // Uint32 flags
             );
-    assert(renderer);
+    assert(renderer); log_renderer_info(renderer);
+
 
     SDL_PixelFormat *format = SDL_AllocFormat(SDL_PIXELFORMAT_RGBA8888);
 
@@ -196,7 +270,6 @@ int main(int argc, char **argv)
         // ---Draw debug led---
         FillRect(debug_led, debug_led_color, screen_pixels);
 
-
         // ---Draw me---
         //
         // Act on keypresses OUTSIDE the SDL_PollEvent loop!
@@ -231,12 +304,33 @@ int main(int argc, char **argv)
         }
         if (pressed_left)
         {
-            me.x -= me.w; // wraparound is automatic
+            if (me.x > 0)
+            {
+                me.x -= me.w;
+            }
+            else // moving left, wrap around to right sight of screen
+            {
+                me.x = SCREEN_WIDTH - me.w;
+            }
         }
         if (pressed_right)
         {
-            me.x += me.w; // wraparound is automatic
+            if (me.x < (SCREEN_WIDTH - me.w))
+            {
+                me.x += me.w;
+            }
+            else // moving right, wrap around to left sight of screen
+            {
+                me.x = 0;
+            }
         }
+        // log me position
+        /* if (pressed_down || pressed_up || pressed_left || pressed_right) */
+        /* { */
+        /*     sprintf(log_msg, "me (x,y) = (%d, %d)\n", me.x, me.y); */
+        /*     log_to_file(log_msg); */
+        /* } */
+
         FillRect(me, me_color, screen_pixels);
 
         SDL_UpdateTexture(
@@ -254,7 +348,7 @@ int main(int argc, char **argv)
                 );
         SDL_RenderPresent(renderer);
 
-        SDL_Delay(15); // sets frame rate
+        SDL_Delay(50); // sets frame rate
 
     }
 
