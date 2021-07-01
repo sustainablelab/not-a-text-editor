@@ -21,13 +21,13 @@
 #include <SDL_video.h>
 
 #define SCREEN_WIDTH 800
-#define SCREEN_HEIGHT 400
+#define SCREEN_HEIGHT 800
 
 typedef Uint32 u32;
-typedef Uint8 BOOL;
+typedef Uint8 Bool;
 
-#define TRUE 1
-#define FALSE 0
+#define True 1
+#define False 0
 
 typedef struct
 {
@@ -81,19 +81,28 @@ int main(int argc, char **argv)
     u32 *screen_pixels = (u32*) calloc(SCREEN_WIDTH * SCREEN_HEIGHT, sizeof(u32));
     assert(screen_pixels);
 
-    /* SDL_Delay(3000); */
-
-    BOOL done = FALSE;
+    Bool done = False;
 
 
-    int me_width = 10;
-    int me_height = 20;
+    int me_w = SCREEN_WIDTH/50;
+    int me_h = SCREEN_HEIGHT/50;
     rect_t me = {
-        SCREEN_WIDTH/2 + me_width/2,
-        SCREEN_HEIGHT/2 - me_height,
-        me_width,
-        me_height
+        // Center me on the screen:
+        SCREEN_WIDTH/2 - me_w/2,
+        SCREEN_HEIGHT/2 - me_h,
+        me_w,
+        me_h
     };
+    int debug_led_w = SCREEN_WIDTH/50;
+    int debug_led_h = SCREEN_HEIGHT/50;
+    rect_t debug_led = {
+        SCREEN_WIDTH - debug_led_w, // top left x
+        0,                          // top left y
+        debug_led_w,                // width
+        debug_led_h                 // height
+    };
+    // LED starts out green. Turns red on vertical wraparound.
+    u32 debug_led_color = 0x00FF0000; // green
 
     while (!done)
     {
@@ -102,24 +111,24 @@ int main(int argc, char **argv)
         {
             if (event.type == SDL_QUIT)
             {
-                done = TRUE;
+                done = True;
             }
 
-            BOOL pressed_down  = FALSE;
-            BOOL pressed_up    = FALSE;
-            BOOL pressed_left  = FALSE;
-            BOOL pressed_right = FALSE;
+            Bool pressed_down  = False;
+            Bool pressed_up    = False;
+            Bool pressed_left  = False;
+            Bool pressed_right = False;
 
             SDL_Keycode code = event.key.keysym.sym;
 
             switch (code)
             {
                 case SDLK_ESCAPE:
-                    done = TRUE;
+                    done = True;
                     break;
 
                 case SDLK_j:
-                    /* pressed_down = TRUE; */
+                    /* pressed_down = True; */
                     pressed_down = (event.type == SDL_KEYDOWN);
                     break;
 
@@ -148,6 +157,7 @@ int main(int argc, char **argv)
                 else // wraparound
                 {
                     me.y = 0;
+                    debug_led_color = 0xFF000000; // red
                 }
             }
             if (pressed_up)
@@ -159,15 +169,16 @@ int main(int argc, char **argv)
                 else // wraparound
                 {
                     me.y = SCREEN_HEIGHT - me.h;
+                    debug_led_color = 0xFF000000; // red
                 }
             }
             if (pressed_left)
             {
-                me.x -= me.w;
+                me.x -= me.w; // wraparound is automatic
             }
             if (pressed_right)
             {
-                me.x += me.w;
+                me.x += me.w; // wraparound is automatic
             }
 
         }
@@ -175,13 +186,17 @@ int main(int argc, char **argv)
         // Clear the screen.
         /* memset(screen_pixels, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u32)); */
         rect_t bgnd = {0,0, SCREEN_WIDTH, SCREEN_HEIGHT};
-        u32 bgnd_color = 0xFF0000FF;
+        /* u32 bgnd_color = 0xFF0000FF; */
+        u32 bgnd_color = 0x111100FF;
         FillRect(bgnd, bgnd_color, screen_pixels);
 
         // Draw me.
-        /* u32 pixel_color = 0x00FF00FF; // RGBA */
-        u32 pixel_color = 0x80808000;
+        u32 pixel_color = 0x22FF00FF; // RGBA
+        /* u32 pixel_color = 0x80808000; */
         FillRect(me, pixel_color, screen_pixels);
+
+        // Draw debug led.
+        FillRect(debug_led, debug_led_color, screen_pixels);
 
         SDL_UpdateTexture(
                 screen,        // SDL_Texture *
