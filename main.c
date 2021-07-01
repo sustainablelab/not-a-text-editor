@@ -20,21 +20,21 @@
 #include <SDL.h>
 #include <SDL_video.h>
 
-#define SCREEN_WIDTH 800
-#define SCREEN_HEIGHT 800
 
+typedef uint32_t u32;
+typedef uint8_t bool;
 
-typedef Uint32 u32;
-typedef Uint8 Bool;
-
-#define True 1
-#define False 0
+#define true 1
+#define false 0
 
 #define internal static // static functions are "internal"
 
 // ---------------
 // | Drawing lib |
 // ---------------
+
+#define SCREEN_WIDTH 800
+#define SCREEN_HEIGHT 800
 
 typedef struct
 {
@@ -76,6 +76,15 @@ internal void log_to_file(char * log_msg)
 
 #define MAX_LOG_MSG 1024
 char log_msg[MAX_LOG_MSG];
+
+// -----------------------
+// | Logging game things |
+// -----------------------
+bool log_me_xy = false;
+
+// ----------------------
+// | Logging SDL things |
+// ----------------------
 
 internal void log_renderer_info(SDL_Renderer * renderer)
 {
@@ -137,7 +146,7 @@ int main(int argc, char **argv)
     SDL_Init(SDL_INIT_VIDEO);
 
     SDL_Window *win = SDL_CreateWindow(
-            "Spell Checker", // const char *title
+            "h,j,k,l", // const char *title
             SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, // int x, int y
             SCREEN_WIDTH, SCREEN_HEIGHT, // int w, int h,
             SDL_WINDOW_RESIZABLE // Uint32 flags
@@ -165,7 +174,7 @@ int main(int argc, char **argv)
     u32 *screen_pixels = (u32*) calloc(SCREEN_WIDTH * SCREEN_HEIGHT, sizeof(u32));
     assert(screen_pixels);
 
-    Bool done = False;
+    bool done = false;
 
     // ---------------------------
     // | Game graphics that move |
@@ -206,10 +215,10 @@ int main(int argc, char **argv)
     // -----------------
     // | Game controls |
     // -----------------
-    Bool pressed_down  = False;
-    Bool pressed_up    = False;
-    Bool pressed_left  = False;
-    Bool pressed_right = False;
+    bool pressed_down  = false;
+    bool pressed_up    = false;
+    bool pressed_left  = false;
+    bool pressed_right = false;
 
 
     while (!done) // GAME LOOP
@@ -223,7 +232,7 @@ int main(int argc, char **argv)
         {
             if (event.type == SDL_QUIT)
             {
-                done = True;
+                done = true;
             }
 
             SDL_Keycode code = event.key.keysym.sym;
@@ -231,11 +240,11 @@ int main(int argc, char **argv)
             switch (code)
             {
                 case SDLK_ESCAPE:
-                    done = True;
+                    done = true;
                     break;
 
                 case SDLK_j:
-                    /* pressed_down = True; */
+                    /* pressed_down = true; */
                     pressed_down = (event.type == SDL_KEYDOWN);
                     break;
 
@@ -267,9 +276,6 @@ int main(int argc, char **argv)
         // Use memset for quickly making the screen black:
         /* memset(screen_pixels, 0, SCREEN_WIDTH*SCREEN_HEIGHT*sizeof(u32)); */
 
-        // ---Draw debug led---
-        FillRect(debug_led, debug_led_color, screen_pixels);
-
         // ---Draw me---
         //
         // Act on keypresses OUTSIDE the SDL_PollEvent loop!
@@ -278,11 +284,16 @@ int main(int argc, char **argv)
             // For example, press hj to move me diagonal down and left. If I
             // calc me position inside the SDL_PollEvent loop, the movement is
             // spread out over two iterations of the GAME LOOP.
+
+        // TODO: control me speed
+        // TODO: add small delay after initial press before repeating movement
+        // TODO: change shape based on direction of movement
         if (pressed_down)
         {
             if ((me.y + me.h) < SCREEN_HEIGHT) // not at bottom yet
             {
                 me.y += me.h;
+                debug_led_color = 0x00FF0000; // green
             }
             else // wraparound
             {
@@ -295,6 +306,7 @@ int main(int argc, char **argv)
             if (me.y > me.h) // not at top yet
             {
                 me.y -= me.h;
+                debug_led_color = 0x00FF0000; // green
             }
             else // wraparound
             {
@@ -307,10 +319,12 @@ int main(int argc, char **argv)
             if (me.x > 0)
             {
                 me.x -= me.w;
+                debug_led_color = 0x00FF0000; // green
             }
             else // moving left, wrap around to right sight of screen
             {
                 me.x = SCREEN_WIDTH - me.w;
+                debug_led_color = 0xFF000000; // red
             }
         }
         if (pressed_right)
@@ -318,20 +332,27 @@ int main(int argc, char **argv)
             if (me.x < (SCREEN_WIDTH - me.w))
             {
                 me.x += me.w;
+                debug_led_color = 0x00FF0000; // green
             }
             else // moving right, wrap around to left sight of screen
             {
                 me.x = 0;
+                debug_led_color = 0xFF000000; // red
             }
         }
-        // log me position
-        /* if (pressed_down || pressed_up || pressed_left || pressed_right) */
-        /* { */
-        /*     sprintf(log_msg, "me (x,y) = (%d, %d)\n", me.x, me.y); */
-        /*     log_to_file(log_msg); */
-        /* } */
+        if (log_me_xy)
+        {
+            if (pressed_down || pressed_up || pressed_left || pressed_right)
+            {
+                sprintf(log_msg, "me (x,y) = (%d, %d)\n", me.x, me.y);
+                log_to_file(log_msg);
+            }
+        }
 
         FillRect(me, me_color, screen_pixels);
+
+        // ---Draw debug led---
+        FillRect(debug_led, debug_led_color, screen_pixels);
 
         SDL_UpdateTexture(
                 screen,        // SDL_Texture *
@@ -348,7 +369,7 @@ int main(int argc, char **argv)
                 );
         SDL_RenderPresent(renderer);
 
-        SDL_Delay(50); // sets frame rate
+        SDL_Delay(15); // sets frame rate
 
     }
 
